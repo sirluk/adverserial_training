@@ -50,14 +50,6 @@ class TrainLogger:
             self.logging_loss = 0.
             self.steps = 0
             
-    def non_zero_params(self, step, n_p, n_p_zero, n_p_between):
-        d = {
-            "zero_ratio": n_p_zero / n_p,
-            "num_params_between": n_p_between
-        }
-        for k,v in d.items():
-            self.writer.add_scalar(f"train/{k}", v, step)
-            
     def is_best(self, result: dict) -> bool:
         if result["loss"] < self.best_eval_loss + self.delta:
             self.best_eval_loss = result["loss"]

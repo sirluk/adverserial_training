@@ -1,0 +1,38 @@
+data_config:
+    train_pkl: "data/train_balanced_every_job.pkl"
+    val_pkl: "data/val.pkl"
+    test_pkl: "data/test.pkl"
+    labels_protected_path: "data/labels_protected_gender.txt"
+    labels_task_path: "data/labels_task.txt"
+    output_dir: "checkpoints"
+    log_dir: "logs"
+model_config:
+    model_name: "google/bert_uncased_L-4_H-256_A-4" # "bert-base-uncased" # "google/bert_uncased_L-4_H-256_A-4" # "google/bert_uncased_L-2_H-128_A-2"
+    batch_size: 64
+train_config:
+    num_epochs: 20
+    num_epochs_warmup: 0
+    learning_rate: 2e-5
+    learning_rate_task_head: 1e-4
+    learning_rate_adv_head: 1e-4
+    task_dropout: .3
+    task_n_hidden: 0
+    adv_dropout: .3
+    adv_n_hidden: 1
+    adv_count: 5
+    adv_lambda: 1.
+    optimizer_warmup_steps: 0
+    max_grad_norm: 1.0
+    logging_step: 5
+    cooldown: 5
+adv_attack:
+    num_epochs: 40
+    learning_rate: 1e-4
+    adv_n_hidden: 1
+    adv_count: 5
+    adv_dropout: .3
+    logging_step: 5
+    cooldown: 5
+    attack_batch_size: 64
+
+
