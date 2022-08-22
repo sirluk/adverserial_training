@@ -2,6 +2,24 @@
 
 This code implements adverserial training for transformer models
 
+## Dataset
+
+### Download Data
+
+The dataset used is based on the following paper:
+
+```
+Maria De-Arteaga, Alexey Romanov, Hanna Wallach, Jennifer Chayes, Christian Borgs, Alexandra Chouldechova, Sahin Geyik, Krishnaram Kenthapadi, Adam Kalai. Bias in Bios: A Case Study of Semantic Representation Bias in a High Stakes Setting. Proceedings of FAT*, 2019
+```
+
+It can be reproduced according to the instructions in this repository: https://github.com/Microsoft/biosbias
+
+### Dataset Preperation
+
+To prepera the dataset for training the following jupyter notebook has to be executed: `prepare_data.ipynb`
+
+Here the text is preprocessed, train, validation and test splits are created and a vocabulary is created.
+
 ## Installation
 
 To run the code make sure conda is installed and then run
@@ -26,7 +44,6 @@ The project structure looks as follows
  ┃ ┃ ┣ 📜model_adv.py (baseline model for adverserial training) \
  ┃ ┃ ┣ 📜model_base.py (contains base class with methods that are used by all models) \
  ┃ ┃ ┣ 📜model_heads.py (classifier and adverserial head classes) \
- ┃ ┃ ┣ 📜model_heads_SIMPLE.py (simplified classifier and adverserial head classes) \
  ┃ ┃ ┣ 📜model_task.py (baseline model for task training) \
  ┃ ┣ 📜adv_attack.py (contains function to run adverserial attack) \
  ┃ ┣ 📜data_handler.py \
@@ -36,6 +53,7 @@ The project structure looks as follows
  ┣ 📜cfg.yml (hyperparameters)\
  ┣ 📜environment.yml (conda environment config)\
  ┣ 📜main.py (main file to run experiments with)\
+ ┣ 📜prepare_data.ipynb (script to prepare BIOS dataset so it can be imported by the data handler) 
  ┗ 📜readme.md
 
 \* Weight parametrizations are implemented as modules and use pytorch parametrizations functionality [LINK](https://pytorch.org/tutorials/intermediate/parametrizations.html)
@@ -48,10 +66,8 @@ contains hyperparameter configuration
 filepaths to data files
 * model_config \
 name of pretrained model and batch_size to use
-* train_config_diff_pruning \
-hyperparameters for diff-pruning-models (model_diff_adv.py and model_diff_task.py)
 * train_config_baseline \
-hyperparameters for baseline models (model_adv.py and model_task.py)
+hyperparameters for model (model_adv.py and model_task.py)
 * adv_attack
 hyperparameters for adverserial attack
 
@@ -63,15 +79,15 @@ python3 main.py
 
 Optional arguments with example inputs
 
-* --baseline=True \
-Run baseline or diff-pruning
-* --adv=True \
+* --gpu_id=0 \
+Which gpu to run experiment on (defaults to 0)
+* --cpu \
+Run experiment on cpu
+* --adv \
 Run adverserial training
-* --modular=True \
-Run modular architecture (overwrites adv argument)
-* --gpu_id 0 1 2 3 \
-Which gpus to run experiment on (can be multiple)
-* --debug=True \
-To verify code can run through, limits number of batches which are used to 10
-* --run_adv_attack=False \
-Set to false if you do not want to run adverserial attack after training
+* --seed=0 \
+Random seed for pytorch (defaults to 0)
+* --debug \
+Run in debug mode (limited dataset, only one epoch)
+* --no_adv_attack \
+Set if you do not want to run adverserial attack after training
