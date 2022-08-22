@@ -4,6 +4,7 @@ from torch.autograd import Function
 
 from typing import Union
 
+
 class ReverseLayerF(Function):
     # https://discuss.pytorch.org/t/solved-reverse-gradients-in-backward-pass/3589/2
     @staticmethod
@@ -16,7 +17,25 @@ class ReverseLayerF(Function):
         grad_input = grad_output.neg() * ctx.lmbda
         return grad_input, None
 
+
+class ClfHeadSimple(nn.Module):
+    
+    def __init__(self, hid_size: int, num_labels: int):
+        super().__init__()
+                
+        # create sequential class from hid_size and out_sizes
+        layers = [
+            nn.Dropout(.3),
+            nn.Linear(hid_size, hid_size),
+            nn.Tanh(),
+            nn.Dropout(.3),
+            nn.Linear(hid_size, num_labels)
+        ] 
+        self.classifier = nn.Sequential(*layers)
         
+    def forward(self, x):
+        return self.classifier(x)  
+
 
 class ClfHead(nn.Module):
     

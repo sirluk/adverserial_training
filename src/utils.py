@@ -21,9 +21,9 @@ def get_num_labels(label_file: Union[str, os.PathLike]) -> int:
     return 1 if num_labels==2 else num_labels
 
 
-def get_device(gpu: bool) -> List[torch.device]:
+def get_device(gpu: bool, gpu_id: int = 0) -> List[torch.device]:
     if gpu and torch.cuda.is_available():
-        return torch.device("cuda")
+        return torch.device(f"cuda:{gpu_id}")
     else:
         return torch.device("cpu")
 
@@ -72,14 +72,14 @@ def get_data(args_train: argparse.Namespace, debug: bool = False) -> Tuple[DataL
 
 
 def get_name_for_run(args_train: argparse.Namespace, adv: bool, debug: bool = False, seed: Optional[int] = None):
-    run_parts.extend([
+    run_parts = [
         "DEBUG" if debug else None,
         "adverserial" if adv else "task",
         args_train.model_name.split('/')[-1],
         str(args_train.batch_size),
         str(args_train.learning_rate),
         f"seed{seed}" if seed is not None else None
-    ])
+    ]
     return "-".join([x for x in run_parts if x is not None])
 
 

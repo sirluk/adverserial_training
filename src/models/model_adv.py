@@ -194,12 +194,9 @@ class AdvModel(BaseModel):
             self.scheduler.step()
             self.zero_grad()
 
-            losses_dict = {
-                "total": loss.item(),
-                "task": loss_task.item(),
-                "protected": loss_protected.item()
-            }
-            logger.step_loss(self.global_step, losses_dict)
+            logger.step_loss(self.global_step, loss.item(), suffix='total')
+            logger.step_loss(self.global_step, loss_task.item(), suffix='task')
+            logger.step_loss(self.global_step, loss_protected.item(), suffix='protected')
 
             epoch_iterator.set_description(epoch_str.format(step, loss.item()), refresh=True)
 

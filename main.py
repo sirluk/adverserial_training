@@ -39,7 +39,6 @@ def train_task(device, train_loader, val_loader, num_labels, train_logger, args_
         optimizer_warmup_steps = args_train.optimizer_warmup_steps,
         max_grad_norm = args_train.max_grad_norm,
         output_dir = args_train.output_dir,
-        cooldown = args_train.cooldown,
         seed = seed
     )
     trainer = TaskModel.load_checkpoint(trainer_cp)
@@ -94,11 +93,12 @@ def train_adv(device, train_loader, val_loader, num_labels, num_labels_protected
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--debug", type=bool, default=False, help="Whether to run on small subset for testing")
-    parser.add_argument("--adv", type=bool, default=False, help="Whether to run adverserial training")
-    parser.add_argument("--run_adv_attack", type=bool, default=True, help="Set to false if you do not want to run adverserial attack after training")
     parser.add_argument("--seed", type=int, default=0, help="torch random seed")
-    parser.add_argument("--cpu", type=bool, default=False, help="Run on cpu")
+    parser.add_argument("--gpu_id", type=int, default=0, help="gpu id")
+    parser.add_argument("--adv", action="store_true", help="Whether to run adverserial training")
+    parser.add_argument("--debug", action="store_true", help="Whether to run on small subset for testing")
+    parser.add_argument("--cpu", action="store_true", help="Run on cpu")
+    parser.add_argument("--no_adv_attack", action="store_true", help="Set if you do not want to run adverserial attack after training")
     base_args = parser.parse_args()
 
     torch.manual_seed(base_args.seed)
@@ -115,7 +115,7 @@ def main():
         args_attack = set_num_epochs_debug(args_attack)
         args_train = set_dir_debug(args_train)
 
-    device = get_device(not base_args.cpu)
+    device = get_device(not base_args.cpu, base_args.gpu_id)
 
     train_loader, val_loader, num_labels, num_labels_protected = get_data(args_train, debug=base_args.debug)
     
@@ -128,7 +128,7 @@ def main():
     else:
         trainer = train_task(device, train_loader, val_loader, num_labels, train_logger, args_train, base_args.seed)
 
-    if base_args.run_adv_attack:
+    if not base_args.no_adv_attack:
         loss_fn, pred_fn, metrics = get_callables(num_labels_protected)
         adv_attack(
             trainer = trainer,
@@ -144,8 +144,7 @@ def main():
             adv_dropout = args_attack.adv_dropout,
             num_epochs = args_attack.num_epochs,
             lr = args_attack.learning_rate,
-            batch_size = args_attack.attack_batch_size,
-            cooldown = args_attack.cooldown
+            batch_size = args_attack.attack_batch_size
         )
 
 

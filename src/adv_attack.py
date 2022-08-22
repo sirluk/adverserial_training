@@ -4,6 +4,7 @@ import torch
 from torch import nn
 from torch.optim import AdamW
 from torch.utils.data import DataLoader, TensorDataset
+from transformers import get_linear_schedule_with_warmup
 
 from src.models.model_heads import AdvHead
 from src.training_logger import TrainLogger
@@ -49,7 +50,6 @@ def adv_attack(
     num_epochs: int,
     lr: float,
     batch_size: Optional[int] = None,
-    cooldown: Optional[int] = 5,
     logger_suffix: str = "adv_attack"
 ):
 
@@ -57,13 +57,16 @@ def adv_attack(
 
     adv_head = AdvHead(
         adv_count,
-        hid_sizes=[trainer.in_size_heads]*(adv_n_hidden+1),
+        hid_sizes=[trainer.hidden_size]*(adv_n_hidden+1),
         num_labels=num_labels,
         dropout_prob=adv_dropout
     )
     adv_head.to(trainer.device)
 
     optimizer = AdamW(adv_head.parameters(), lr=lr)
+    scheduler = get_linear_schedule_with_warmup(
+        optimizer, num_warmup_steps=0, num_training_steps=len(train_loader) * num_epochs
+    )
 
     train_loader = get_hidden_dataloader(trainer, train_loader, batch_size=batch_size)
     val_loader = get_hidden_dataloader(trainer, val_loader, shuffle=False, batch_size=batch_size)
@@ -72,7 +75,6 @@ def adv_attack(
     train_str = "Epoch {}, {}"
     result_str = lambda x: ", ".join([f"{k}: {v}" for k,v in x.items()])
 
-    performance_decrease_counter = 0
     train_iterator = trange(num_epochs, desc=train_str.format(0, ""), leave=False, position=0)
     for epoch in train_iterator:
 
@@ -88,7 +90,7 @@ def adv_attack(
 
             loss.backward()
             optimizer.step()
-            # scheduler.step()
+            scheduler.step()
             adv_head.zero_grad()
 
             logger.step_loss(global_step, loss.item(), lr=lr, suffix=logger_suffix)
@@ -107,14 +109,6 @@ def adv_attack(
             train_str.format(epoch, result_str(result)), refresh=True
         )
 
-        if logger.is_best(result):
-            best_epoch = epoch
-            performance_decrease_counter = 0
-        else:
-            performance_decrease_counter += 1
-
-        if performance_decrease_counter>cooldown:
-            break
-
     print("Adv Attack: Final result after " +  train_str.format(epoch, result_str(result)))
-    print("Adv Attack: Best result " +  train_str.format(best_epoch, result_str({"loss": logger.best_eval_loss})))
+    
+    return adv_head

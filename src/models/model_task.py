@@ -1,4 +1,3 @@
-from optparse import Option
 import os
 import math
 from tqdm import trange, tqdm
@@ -24,9 +23,6 @@ class TaskModel(BaseModel):
         num_labels: int,
         dropout: float = .3,
         n_hidden: int = 0,
-        bottleneck: bool = False,
-        bottleneck_dim: Optional[int] = None,
-        bottleneck_dropout: Optional[float] = None,
         **kwargs
     ):
         super().__init__(model_name, **kwargs)
@@ -34,23 +30,8 @@ class TaskModel(BaseModel):
         self.num_labels = num_labels
         self.dropout = dropout
         self.n_hidden = n_hidden
-        self.has_bottleneck = bottleneck
-        self.bottleneck_dim = bottleneck_dim
-        self.bottleneck_dropout = bottleneck_dropout
 
-        # bottleneck layer
-        if self.has_bottleneck:
-            self.bottleneck = ClfHead(self.hidden_size, bottleneck_dim, dropout=bottleneck_dropout)
-            self.in_size_heads = bottleneck_dim
-        else:
-            self.bottleneck = torch.nn.Identity()
-            self.in_size_heads = self.hidden_size
-
-        self.task_head = ClfHead([self.in_size_heads]*(n_hidden+1), num_labels, dropout=dropout)
-
-    def _forward(self, **x) -> torch.Tensor:
-        hidden = super()._forward(**x)
-        return self.bottleneck(hidden)
+        self.task_head = ClfHead([self.hidden_size]*(n_hidden+1), num_labels, dropout=dropout)
 
     def forward(self, **x) -> torch.Tensor:
         return self.task_head(self._forward(**x))
@@ -65,12 +46,10 @@ class TaskModel(BaseModel):
         metrics: Dict[str, Callable],
         num_epochs: int,
         learning_rate: float,
-        learning_rate_bottleneck: float,
         learning_rate_head: float,
         optimizer_warmup_steps: int,
         max_grad_norm: float,
         output_dir: Union[str, os.PathLike],
-        cooldown: int,
         seed: Optional[int] = None
     ) -> None:
 
@@ -81,7 +60,6 @@ class TaskModel(BaseModel):
             train_steps,
             learning_rate,
             learning_rate_head,
-            learning_rate_bottleneck,
             optimizer_warmup_steps
         )
 
@@ -90,7 +68,6 @@ class TaskModel(BaseModel):
         train_str = "Epoch {}, {}"
         str_suffix = lambda d: ", ".join([f"{k}: {v}" for k,v in d.items()])
 
-        performance_decrease_counter = 0
         train_iterator = trange(num_epochs, desc=train_str.format(0, ""), leave=False, position=0)
         for epoch in train_iterator:
 
@@ -114,20 +91,9 @@ class TaskModel(BaseModel):
                 train_str.format(epoch, str_suffix(result)), refresh=True
             )
 
-            if logger.is_best(result):
-                cpt = self.save_checkpoint(Path(output_dir), seed)
-                cpt_epoch = epoch
-                performance_decrease_counter = 0
-            else:
-                performance_decrease_counter += 1
-
-            if performance_decrease_counter>cooldown:
-                break
-
-        logger.write_best_eval_metric()
+            cpt = self.save_checkpoint(Path(output_dir), seed)
 
         print("Final result after " + train_str.format(epoch, str_suffix(result)))
-        print("Best result: " + train_str.format(cpt_epoch, str_suffix({"loss": logger.best_eval_loss})))
         
         return cpt
 
@@ -171,7 +137,7 @@ class TaskModel(BaseModel):
             self.scheduler.step()
             self.zero_grad()
 
-            logger.step_loss(self.global_step, {"total": loss.item(), "task": loss.item()})
+            logger.step_loss(self.global_step, loss.item())
 
             epoch_iterator.set_description(epoch_str.format(step, loss.item()), refresh=True)
 
@@ -183,17 +149,12 @@ class TaskModel(BaseModel):
         num_training_steps: int,
         learning_rate: float,
         learning_rate_head: float,
-        learning_rate_bottleneck: float = 1e-4,
         num_warmup_steps: int = 0
     ) -> None:
         optimizer_params = [
             {
                 "params": self.encoder.parameters(),
                 "lr": learning_rate
-            },
-            {
-                "params": self.bottleneck.parameters(),
-                "lr": learning_rate_bottleneck
             },
             {
                 "params": self.task_head.parameters(),
@@ -217,11 +178,7 @@ class TaskModel(BaseModel):
             "num_labels": self.num_labels,
             "dropout": self.dropout,
             "n_hidden": self.n_hidden,
-            "bottleneck": self.has_bottleneck,
-            "bottleneck_dim": self.bottleneck_dim,
-            "bottleneck_dropout": self.bottleneck_dropout,
             "encoder_state_dict": self.encoder.state_dict(),
-            "bottleneck_state_dict": self.bottleneck.state_dict(),
             "task_head_state_dict": self.task_head.state_dict()
         }
 
@@ -236,20 +193,20 @@ class TaskModel(BaseModel):
 
 
     @classmethod
-    def load_checkpoint(cls, filepath: Union[str, os.PathLike], map_location: Union[str, torch.device] = torch.device('cpu')) -> torch.nn.Module:
+    def load_checkpoint(
+        cls,
+        filepath: Union[str, os.PathLike],
+        map_location: Union[str, torch.device] = torch.device('cpu')
+    ) -> torch.nn.Module:
         info_dict = torch.load(filepath, map_location=map_location)
 
         cls_instance = cls(
             info_dict['model_name'],
             info_dict['num_labels'],
             info_dict['dropout'],
-            info_dict['n_hidden'],
-            info_dict['bottleneck'],
-            info_dict['bottleneck_dim'],
-            info_dict['bottleneck_dropout']
+            info_dict['n_hidden']
         )
         cls_instance.encoder.load_state_dict(info_dict['encoder_state_dict'])
-        cls_instance.bottleneck.load_state_dict(info_dict['bottleneck_state_dict'])
         cls_instance.task_head.load_state_dict(info_dict['task_head_state_dict'])
 
         cls_instance.eval()

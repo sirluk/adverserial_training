@@ -1,8 +1,12 @@
 import os
 import torch
+from torch.utils.data import DataLoader
 from transformers import AutoModel
+from tqdm import tqdm
 
-from typing import Union
+from typing import Union, Callable, Dict, List
+
+from src.utils import dict_to_device
 
 
 class BaseModel(torch.nn.Module):
@@ -13,20 +17,20 @@ class BaseModel(torch.nn.Module):
 
     @property
     def model_type(self) -> str:
-        return self.encoder_module.config.model_type
+        return self.encoder.config.model_type
 
     @property
     def model_name(self) -> str:
-        return self.encoder_module.config._name_or_path
+        return self.encoder.config._name_or_path
 
     @property
     def hidden_size(self) -> int:
-        return self.encoder_module.embeddings.word_embeddings.embedding_dim
+        return self.encoder.embeddings.word_embeddings.embedding_dim
 
     @property
     def total_layers(self) -> int:
         possible_keys = ["num_hidden_layers", "n_layer"]
-        cfg = self.encoder_module.config
+        cfg = self.encoder.config
         for k in possible_keys:
             if k in cfg.__dict__:
                 return getattr(cfg, k) + 1 # +1 for embedding layer and last layer
