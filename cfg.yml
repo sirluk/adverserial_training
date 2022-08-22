@@ -1,19 +1,11 @@
-# data_config:
-#     train_pkl: "data/train_balanced.pkl"
-#     val_pkl: "data/val.pkl"
-#     test_pkl: "data/test.pkl"
-#     labels_protected_path: "data/labels_protected_gender.txt"
-#     labels_task_path: "data/labels_task.txt"
-#     output_dir: "checkpoints"
-#     log_dir: "logs"
 data_config:
-    train_pkl: "/share/cp/datasets/nlp/text_classification_bias/bios/only_task_balanced/train_balanced_every_job.pkl"
-    val_pkl: "/share/cp/datasets/nlp/text_classification_bias/bios/only_task_balanced/val.pkl"
-    test_pkl: "/share/cp/datasets/nlp/text_classification_bias/bios/only_task_balanced/test.pkl"
-    labels_protected_path: "/share/cp/datasets/nlp/text_classification_bias/bios/labels_protected_gender.txt"
-    labels_task_path: "/share/cp/datasets/nlp/text_classification_bias/bios/labels_task.txt"
-    output_dir: "checkpoints_bios"
-    log_dir: "logs_bios"
+    train_pkl: "data/train_balanced.pkl"
+    val_pkl: "data/val.pkl"
+    test_pkl: "data/test.pkl"
+    labels_protected_path: "data/labels_protected_gender.txt"
+    labels_task_path: "data/labels_task.txt"
+    output_dir: "checkpoints"
+    log_dir: "logs"
 model_config:
     model_name: "google/bert_uncased_L-2_H-128_A-2" # "bert-base-uncased" # "google/bert_uncased_L-4_H-256_A-4" # "google/bert_uncased_L-2_H-128_A-2"
     batch_size: 64
