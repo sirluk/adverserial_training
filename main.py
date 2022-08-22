@@ -93,11 +93,12 @@ def train_adv(device, train_loader, val_loader, num_labels, num_labels_protected
 def main():
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=0, help="torch random seed")
+    
     parser.add_argument("--gpu_id", type=int, default=0, help="gpu id")
-    parser.add_argument("--adv", action="store_true", help="Whether to run adverserial training")
-    parser.add_argument("--debug", action="store_true", help="Whether to run on small subset for testing")
     parser.add_argument("--cpu", action="store_true", help="Run on cpu")
+    parser.add_argument("--adv", action="store_true", help="Whether to run adverserial training")
+    parser.add_argument("--seed", type=int, default=0, help="torch random seed")
+    parser.add_argument("--debug", action="store_true", help="Whether to run on small subset for testing")
     parser.add_argument("--no_adv_attack", action="store_true", help="Set if you do not want to run adverserial attack after training")
     base_args = parser.parse_args()
 
