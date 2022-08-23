@@ -85,6 +85,7 @@ class ClfHead(nn.Module):
 
 
 class AdvHead(nn.Module):
+    
     def __init__(self, adv_count: int = 1, **kwargs):
         super().__init__()    
         self.heads = nn.ModuleList()
