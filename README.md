@@ -53,7 +53,7 @@ The project structure looks as follows
  ┣ 📜cfg.yml (hyperparameters)\
  ┣ 📜environment.yml (conda environment config)\
  ┣ 📜main.py (main file to run experiments with)\
- ┣ 📜prepare_data.ipynb (script to prepare BIOS dataset so it can be imported by the data handler) 
+ ┣ 📜prepare_data.ipynb (script to prepare BIOS dataset so it can be imported by the data handler)\
  ┗ 📜readme.md
 
 \* Weight parametrizations are implemented as modules and use pytorch parametrizations functionality [LINK](https://pytorch.org/tutorials/intermediate/parametrizations.html)
