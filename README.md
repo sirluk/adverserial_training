@@ -38,7 +38,7 @@ conda activate adv_training
 
 The project structure looks as follows
 
-📦debiasing_text_classification \
+📦adverserial_training \
  ┣ 📂src \
  ┃ ┣ 📂models (directory which contains all model classes)\
  ┃ ┃ ┣ 📜model_adv.py (baseline model for adverserial training) \
